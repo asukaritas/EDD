@@ -1,0 +1,152 @@
+import java.util.LinkedList;
+import java.util.Queue;
+import java.util.Random;
+import java.util.Scanner;
+
+public class Domino {
+
+    // Clase estática anidada que representa una ficha de dominó
+    static class Ficha {
+        int ladoA;  // Número de puntos en un extremo de la ficha
+        int ladoB;  // Número de puntos en el otro extremo de la ficha
+
+        // Constructor que inicializa los puntos de la ficha
+        Ficha(int ladoA, int ladoB) {
+            this.ladoA = ladoA;
+            this.ladoB = ladoB;
+        }
+
+        // Método que gira la ficha (intercambia los puntos de los extremos)
+        void girar() {
+            int temp = ladoA;  // Variable temporal para almacenar el valor de ladoA
+            ladoA = ladoB;     // Asigna el valor de ladoB a ladoA
+            ladoB = temp;      // Asigna el valor temporal a ladoB
+        }
+
+        // Método sobrescrito para representar la ficha como una cadena de texto
+        @Override
+        public String toString() {
+            return "[" + ladoA + "|" + ladoB + "]";  // Retorna una representación en texto de la ficha
+        }
+    }
+
+    // Método para generar fichas aleatorias
+    private static Queue<Ficha> generarFichasAleatorias() {
+        Queue<Ficha> fichas = new LinkedList<>();
+        Random random = new Random();
+        boolean[][] generadas = new boolean[7][7]; // Para asegurar que no se repitan fichas
+
+        while (fichas.size() < 9) { // Un juego completo de dominó tiene 28 fichas
+            int ladoA = random.nextInt(7);
+            int ladoB = random.nextInt(7);
+
+            if (!generadas[ladoA][ladoB] && !generadas[ladoB][ladoA]) {
+                fichas.add(new Ficha(ladoA, ladoB));
+                generadas[ladoA][ladoB] = true;
+                generadas[ladoB][ladoA] = true;
+            }
+        }
+
+        return fichas;
+    }
+
+    // Método principal donde se ejecuta el programa
+    public static void main(String[] args) {
+        Queue<Ficha> fichasDisponibles = generarFichasAleatorias();
+        LinkedList<Ficha> fichasEnJuego = new LinkedList<>();
+
+        // Sacar una ficha inicial de las fichas disponibles y agregarla a las fichas en juego
+        Ficha fichaInicial = fichasDisponibles.poll();
+        fichasEnJuego.add(fichaInicial);
+
+        Scanner in = new Scanner(System.in);
+        boolean juegoTerminado = false;
+
+        while (!fichasDisponibles.isEmpty() && !juegoTerminado) {
+            // Mostrar las fichas en juego
+            System.out.println("Fichas en juego:"); 
+            for (Ficha ficha : fichasEnJuego) { // Bucle for each para fichas
+                System.out.print(ficha + " ");
+            }
+            System.out.println(); // Salto de línea para separar las fichas en juego y las disponibles
+
+            // Mostrar la ficha actual en juego
+            Ficha primeraFichaEnJuego = fichasEnJuego.getFirst();
+            Ficha ultimaFichaEnJuego = fichasEnJuego.getLast();
+            System.out.println("Ficha inicial en juego: " + primeraFichaEnJuego);
+            System.out.println("Ficha final en juego: " + ultimaFichaEnJuego);
+            System.out.println("Tus fichas disponibles:");
+
+            // Mostrar las fichas disponibles
+            int index = 1;
+            for (Ficha ficha : fichasDisponibles) {
+                System.out.println(index + ". " + ficha);
+                index++;
+            }
+
+            // Pedir al usuario que seleccione una ficha
+            System.out.println("Elige una ficha para jugar (ingresa el número correspondiente): ");
+            int eleccion = in.nextInt();
+
+            // Validar la entrada del usuario
+            if (eleccion < 1 || eleccion > fichasDisponibles.size()) {
+                System.out.println("Selección inválida. Intenta de nuevo.");
+                continue;
+            }
+
+            // Obtener la ficha elegida
+            Ficha fichaSeleccionada = null;
+            index = 1;
+            for (Ficha ficha : fichasDisponibles) {
+                if (index == eleccion) {
+                    fichaSeleccionada = ficha;
+                    break;
+                }
+                index++;
+            }
+
+            // Intentar colocar la ficha seleccionada en el extremo derecho
+            boolean fichaColocada = false;
+            if (ultimaFichaEnJuego.ladoB == fichaSeleccionada.ladoA) {
+                fichasEnJuego.addLast(fichaSeleccionada);
+                fichaColocada = true;
+            } else if (ultimaFichaEnJuego.ladoB == fichaSeleccionada.ladoB) {
+                fichaSeleccionada.girar();
+                fichasEnJuego.addLast(fichaSeleccionada);
+                fichaColocada = true;
+            }
+
+            // Si no se pudo colocar en el extremo derecho, intentar en el extremo izquierdo
+            if (!fichaColocada) {
+                if (primeraFichaEnJuego.ladoA == fichaSeleccionada.ladoB) {
+                    fichasEnJuego.addFirst(fichaSeleccionada);
+                    fichaColocada = true;
+                } else if (primeraFichaEnJuego.ladoA == fichaSeleccionada.ladoA) {
+                    fichaSeleccionada.girar();
+                    fichasEnJuego.addFirst(fichaSeleccionada);
+                    fichaColocada = true;
+                }
+            }
+
+            if (fichaColocada) {
+                fichasDisponibles.remove(fichaSeleccionada);
+            } else {
+                System.out.println("No puedes colocar esta ficha en ningún extremo. Intenta de nuevo.");
+            }
+
+            // Verificar si el juego ha terminado (no hay más fichas disponibles o no se pueden colocar más fichas)
+            if (fichasDisponibles.isEmpty()) {
+                System.out.println("No hay más fichas disponibles. Fin del juego.");
+                juegoTerminado = true;
+            }
+        }
+
+        // Imprimir la secuencia de fichas en juego al finalizar
+        System.out.println("Secuencia de fichas jugadas:");
+        for (Ficha ficha : fichasEnJuego) {
+            System.out.print(ficha + " ");
+        }
+
+        in.close();
+    }
+}
